@@ -1,4 +1,5 @@
 import { FormEvent, KeyboardEvent, ReactNode, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 export function useModalBanner(): [typeof showBanner, typeof Banner] {
@@ -70,7 +71,7 @@ function ModalBanner({
     }
   }
 
-  return (
+  return createPortal(
     <>
       {showDialog && (
         <div className="fixed inset-0 z-30" onClick={() => setShowDialog(false)} />
@@ -101,6 +102,7 @@ function ModalBanner({
           </button>
         </div>
       </form>
-    </>
+    </>,
+    document.body,
   )
 }

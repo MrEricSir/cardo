@@ -12,6 +12,8 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { SyncProvider } from './sync/Sync'
 import { platform } from '@tauri-apps/plugin-os'
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { transientScrollbarOptions } from './scrollbar-options'
 const appWindow = getCurrentWebviewWindow()
 const PodcastPreview = lazy(() => import('./pages/PodcastPreview'))
 const EpisodePreview = lazy(() => import('./pages/EpisodePreview'))
@@ -64,7 +66,11 @@ const App = () => {
                   <LeftMenu />
                   <div className="flex h-full w-full flex-col overflow-y-hidden">
                     <SearchBar />
-                    <div className="border-primary-8 flex h-full overflow-y-auto scroll-smooth border-t">
+                    <OverlayScrollbarsComponent
+                      className="border-primary-8 h-full border-t"
+                      options={transientScrollbarOptions}
+                      defer
+                    >
                       <Suspense>
                         <Routes>
                           <Route path="/" element={<HomePage />} />
@@ -75,7 +81,7 @@ const App = () => {
                           <Route path="/downloads" element={<DownloadsPage />} />
                         </Routes>
                       </Suspense>
-                    </div>
+                    </OverlayScrollbarsComponent>
                   </div>
                 </div>
                 <AudioPlayer className="h-28 w-full shrink-0" />

@@ -24,7 +24,6 @@ export function PodcastCover({ podcast, ...props }: PodcastCoverProps) {
     <img
       src={coverUrl}
       alt=""
-      loading="lazy"
       decoding="async"
       onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.src = appIcon
@@ -43,7 +42,7 @@ export function EpisodeCover({ episode, ...props }: EpisodeCoverProps) {
   return (
     <div className="flip">
       <div className="front">
-        <img src={episode.coverUrl} alt="" loading="lazy" decoding="async" onError={() => setError(true)} {...props} />
+        <img src={episode.coverUrl} alt="" decoding="async" onError={() => setError(true)} {...props} />
       </div>
       <div className="back">
         {episode.podcast?.coverUrl ? (
@@ -52,7 +51,6 @@ export function EpisodeCover({ episode, ...props }: EpisodeCoverProps) {
           <img
             src={episode.coverUrl}
             alt=""
-            loading="lazy"
             decoding="async"
             onError={() => setError(true)}
             {...props}

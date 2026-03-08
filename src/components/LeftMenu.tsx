@@ -7,6 +7,8 @@ import { useModalBanner } from './ModalBanner'
 import { parsePodcastDetails, toastError } from '../utils/utils'
 import { useRef } from 'react'
 import { useSubscriptions, useSubscriptionsEpisodes } from '../ContextProviders'
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { transientScrollbarOptions } from '../scrollbar-options'
 
 function NewSubscriptionButton({ mini = false }: { mini?: boolean }) {
   const { t } = useTranslation()
@@ -148,12 +150,14 @@ function LeftMenu() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-1 overflow-y-auto scroll-smooth">
-          {subscriptions.subscriptions.map((subscription) => {
-            return <SubscriptionCard key={subscription.id} podcast={subscription} mini={collapsedLeftMenu} />
-          })}
-          <NewSubscriptionButton mini={collapsedLeftMenu} />
-        </div>
+        <OverlayScrollbarsComponent options={transientScrollbarOptions} defer>
+          <div className="flex flex-col gap-1">
+            {subscriptions.subscriptions.map((subscription) => {
+              return <SubscriptionCard key={subscription.id} podcast={subscription} mini={collapsedLeftMenu} />
+            })}
+            <NewSubscriptionButton mini={collapsedLeftMenu} />
+          </div>
+        </OverlayScrollbarsComponent>
       </div>
 
       {/* FOLD MENU TOGGLE ON BORDER */}

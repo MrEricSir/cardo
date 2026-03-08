@@ -8,6 +8,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import EpisodeCard from './EpisodeCard'
 import { useSubscriptionsEpisodes, useSubscriptions } from '../ContextProviders'
 import { useSettings } from '../engines/Settings'
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
+import { transientScrollbarOptions } from '../scrollbar-options'
 
 function SearchBar() {
   const [results, setResults] = useState<PodcastData[] | EpisodeData[]>([])
@@ -28,7 +30,6 @@ function SearchBar() {
   ] = useSettings()
   const timeout = useRef<ReturnType<typeof setInterval>>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const resultsRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
 
   const navigate = useNavigate()
@@ -198,41 +199,40 @@ function SearchBar() {
           {/* close with click outside */}
           <div className="absolute left-0 top-0 z-10 mt-10 h-screen w-screen" onClick={() => setResults([])} />
 
-          <div
-            className="absolute left-1/2 top-0 z-30 mt-[32px] max-h-[60dvh] w-4/5 -translate-x-1/2 justify-center overflow-hidden overflow-y-auto scroll-smooth rounded-b-md border-x-2 border-primary-8 bg-primary-9 shadow-md shadow-primary-8"
-            ref={resultsRef}
-          >
-            <div className="flex w-full flex-col">
-              {searchMode === 'podcasts' && (
-                <div className="flex items-center justify-center gap-3 px-4 py-2">
-                  {searchEngineOptions.map((newEngine) => (
-                    <span
-                      key={newEngine}
-                      className={`cursor-pointer font-thin ${newEngine === engine ? 'text-accent-5' : ''}`}
-                      onClick={() => {
-                        updateSettings({ search: { engine: newEngine } })
-                      }}
-                    >
-                      {newEngine}
-                    </span>
-                  ))}
-                </div>
-              )}
+          <div className="absolute left-1/2 top-0 z-30 mt-[32px] max-h-[60dvh] w-4/5 -translate-x-1/2 overflow-hidden rounded-b-md border-x-2 border-primary-8 bg-primary-9 shadow-md shadow-primary-8">
+            <OverlayScrollbarsComponent className="max-h-[inherit]" options={transientScrollbarOptions} defer>
+              <div className="flex w-full flex-col">
+                {searchMode === 'podcasts' && (
+                  <div className="flex items-center justify-center gap-3 px-4 py-2">
+                    {searchEngineOptions.map((newEngine) => (
+                      <span
+                        key={newEngine}
+                        className={`cursor-pointer font-thin ${newEngine === engine ? 'text-accent-5' : ''}`}
+                        onClick={() => {
+                          updateSettings({ search: { engine: newEngine } })
+                        }}
+                      >
+                        {newEngine}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
-              {results.map((result) => {
-                if (searchMode === 'podcasts') {
-                  return <PodcastCard key={(result as PodcastData).feedUrl} podcast={result as PodcastData} />
-                } else {
-                  return (
-                    <EpisodeCard
-                      key={result.id}
-                      episode={result as EpisodeData}
-                      className="border-b border-primary-8 transition-colors hover:bg-primary-8"
-                    />
-                  )
-                }
-              })}
-            </div>
+                {results.map((result) => {
+                  if (searchMode === 'podcasts') {
+                    return <PodcastCard key={(result as PodcastData).feedUrl} podcast={result as PodcastData} />
+                  } else {
+                    return (
+                      <EpisodeCard
+                        key={result.id}
+                        episode={result as EpisodeData}
+                        className="border-b border-primary-8 transition-colors hover:bg-primary-8"
+                      />
+                    )
+                  }
+                })}
+              </div>
+            </OverlayScrollbarsComponent>
           </div>
         </>
       )}

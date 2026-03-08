@@ -13,6 +13,8 @@ import { Menu } from '@tauri-apps/api/menu'
 import { useSync, useSubscriptions, useHistory, useSubscriptionsEpisodes } from '../ContextProviders'
 import { PodcastCover } from '../components/Cover'
 import { useModalBanner } from '../components/ModalBanner'
+import { OverlayScrollbarsComponent, OverlayScrollbarsComponentRef } from 'overlayscrollbars-react'
+import { transientScrollbarOptions } from '../scrollbar-options'
 
 const EPISODE_CARD_HEIGHT = 80 // min height
 const PRELOADED_EPISODES = 10 //
@@ -71,7 +73,8 @@ function PodcastPreview() {
   const { t } = useTranslation()
   const [showChangeCoverBanner, ChangeCoverBanner] = useModalBanner()
 
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const osRef = useRef<OverlayScrollbarsComponentRef>(null)
+  const getViewport = () => osRef.current?.osInstance()?.elements().viewport as HTMLElement | undefined
   const [visibleItems, setVisibleItems] = useState(() => {
     const savedVisibleItems = sessionStorage.getItem(`visibleItems-${location.key}`)
     if (savedVisibleItems) {
@@ -188,14 +191,12 @@ function PodcastPreview() {
   useEffect(() => {
     setTweakMenu(undefined)
 
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: 0, behavior: 'instant' })
-    }
+    getViewport()?.scrollTo({ top: 0, behavior: 'instant' })
   }, [podcast.feedUrl])
 
   useEffect(() => {
-    if (!scrollRef.current) return
-    const el = scrollRef.current
+    const el = getViewport()
+    if (!el) return
     const observer = new ResizeObserver(() => {
       const elementsOnWindow = Math.floor(el.clientHeight / EPISODE_CARD_HEIGHT) + 1
       setVisibleItems((prev) => Math.max(prev, elementsOnWindow))
@@ -209,8 +210,9 @@ function PodcastPreview() {
     // scroll is saved when entering to any episode details
 
     const savedScroll = sessionStorage.getItem(`scroll-${location.key}`)
-    if (savedScroll && scrollRef.current && episodes.length) {
-      scrollRef.current.scrollTo({ top: Number(savedScroll), behavior: 'instant' })
+    const viewport = getViewport()
+    if (savedScroll && viewport && episodes.length) {
+      viewport.scrollTo({ top: Number(savedScroll), behavior: 'instant' })
       sessionStorage.removeItem(`scroll-${location.key}`)
     }
   }, [episodes])
@@ -256,7 +258,7 @@ function PodcastPreview() {
         />
       </ChangeCoverBanner>
 
-      <div className="relative w-full px-1">
+      <div className="relative h-full w-full px-1">
         {/* sticky bar that appears when scrolling */}
         <div className="group border-primary-8 bg-primary-9 absolute top-0 z-10 flex w-full cursor-default items-center gap-2 border-b-2 p-1">
           <PodcastCover className="bg-primary-7 aspect-square h-10 rounded-md" podcast={podcast} />
@@ -265,21 +267,26 @@ function PodcastPreview() {
 
           <span
             className="absolute left-1/2 w-10 -translate-x-1/2 cursor-pointer opacity-0 transition-opacity group-hover:opacity-100"
-            onClick={() => scrollRef.current && scrollRef.current.scrollTo({ top: 0 })}
+            onClick={() => getViewport()?.scrollTo({ top: 0 })}
           >
             {icons.upArrowSquare}
           </span>
         </div>
 
-        <div
-          ref={scrollRef}
-          className="relative flex h-full w-full flex-col overflow-y-auto scroll-smooth"
-          onScroll={() => {
-            if (!scrollRef.current) return
-            const scrolledWindows = scrollRef.current.scrollTop / scrollRef.current.clientHeight + 1
-            const elementsOnWindow = Math.floor(scrollRef.current.clientHeight / EPISODE_CARD_HEIGHT) + 1
+        <OverlayScrollbarsComponent
+          ref={osRef}
+          className="h-full w-full"
+          options={transientScrollbarOptions}
+          events={{
+            scroll: (instance) => {
+              const viewport = instance.elements().viewport
+              const scrolledWindows = viewport.scrollTop / viewport.clientHeight + 1
+              const elementsOnWindow = Math.floor(viewport.clientHeight / EPISODE_CARD_HEIGHT) + 1
 
-            setVisibleItems(Math.max(visibleItems, Math.round(scrolledWindows * elementsOnWindow) + PRELOADED_EPISODES))
+              setVisibleItems((prev) =>
+                Math.max(prev, Math.round(scrolledWindows * elementsOnWindow) + PRELOADED_EPISODES),
+              )
+            },
           }}
         >
           {tweakMenu && (
@@ -448,12 +455,12 @@ function PodcastPreview() {
               <h1 className="text-lg">{podcast.podcastName}</h1>
               <h2 className="mb-2">{podcast.artistName}</h2>
 
-              <div className="flex overflow-y-auto scroll-smooth rounded-md pr-2">
+              <OverlayScrollbarsComponent className="rounded-md pr-2" options={transientScrollbarOptions} defer>
                 <div
                   className="text-primary-4 text-sm whitespace-pre-line"
                   dangerouslySetInnerHTML={{ __html: sanitizeHTML(podcast.description ?? '') }}
                 />
-              </div>
+              </OverlayScrollbarsComponent>
             </div>
           </div>
 
@@ -474,14 +481,14 @@ function PodcastPreview() {
                 onClick={() => {
                   sessionStorage.setItem(
                     `scroll-${location.key}`,
-                    Math.floor(scrollRef.current?.scrollTop ?? 0).toString(),
+                    Math.floor(getViewport()?.scrollTop ?? 0).toString(),
                   )
                   sessionStorage.setItem(`visibleItems-${location.key}`, visibleItems.toString())
                 }}
               />
             ))}
           </div>
-        </div>
+        </OverlayScrollbarsComponent>
       </div>
     </>
   )
